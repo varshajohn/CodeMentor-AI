@@ -41,7 +41,10 @@ const saveSession = async (req, res) => {
 
 const getSessions = async (req, res) => {
   try {
-    const sessions = await Session.find()
+    const { userId } = req.query;
+    // Filter sessions by userId if provided to keep history lists private
+    const filter = userId ? { userId } : {};
+    const sessions = await Session.find(filter)
       .sort({ createdAt: -1 });
 
     res.json({

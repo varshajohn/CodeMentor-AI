@@ -5,6 +5,17 @@ const {
   generateNotes,
 } = require("../services/groqService");
 
+function cleanJSONResponse(str) {
+  if (!str) return "";
+  let cleaned = str.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\n?/i, "");
+    cleaned = cleaned.replace(/\n?```$/, "");
+    cleaned = cleaned.trim();
+  }
+  return cleaned;
+}
+
 const generate = async (req, res) => {
   try {
     const { prompt, language } = req.body;
@@ -26,9 +37,10 @@ const optimize = async (req, res) => {
     const { code, language } = req.body;
 
     const result = await optimizeCode(code, language);
+    const cleanedResult = cleanJSONResponse(result);
 
     res.json({
-      result,
+      result: cleanedResult,
     });
   } catch (e) {
     res.status(500).json({

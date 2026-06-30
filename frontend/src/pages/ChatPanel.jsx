@@ -6,11 +6,13 @@ export default function ChatPanel({
   code,
   prompt,
   language,
+  optimizedCode,
   history,
   setHistory,
 }) {
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [notes, setNotes] = useState("");
 
   const bottomRef = useRef(null);
@@ -30,11 +32,8 @@ export default function ChatPanel({
     };
 
     const updated = [...history, userMessage];
-
     setHistory(updated);
-
     setQuestion("");
-
     setLoading(true);
 
     try {
@@ -44,186 +43,123 @@ export default function ChatPanel({
         question,
       });
 
-      const aiMessage = {
+      setHistory((prev) => [...prev, {
         role: "assistant",
         content: res.data.answer,
-      };
-
-      setHistory((prev) => [...prev, aiMessage]);
-    } catch (err) {
-      console.log(err);
-
+      }]);
+    } catch {
       setHistory((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "Unable to generate a response. Please try again.",
+          content: "Failed to compile response. Please try again.",
         },
       ]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const generateNotes = async () => {
     try {
       setLoading(true);
+      setSaving(true);
 
       const res = await api.post("/ai/notes", {
         prompt,
         language,
         code,
-        optimizedCode: "",
+        optimizedCode: optimizedCode || "",
         history,
       });
 
       setNotes(res.data.studyNotes);
 
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = user.id || user._id;
+
       await api.post("/session/save", {
+        userId,
         title: prompt,
         prompt,
         language,
         generatedCode: code,
-        optimizedCode: "",
+        optimizedCode: optimizedCode || "",
         chatHistory: history,
         studyNotes: res.data.studyNotes,
       });
-    } catch (err) {
-      console.log(err);
-      alert("Failed to generate notes.");
-    }
-
-    setLoading(false);
-  };
-
-  const enter = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      askAI();
+      
+      alert("Revision notes created and saved successfully.");
+    } catch {
+      alert("Failed to compile notes.");
+    } finally {
+      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
-    <>
-      <div className="rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
-
-        <div className="px-6 py-5 border-b border-slate-800">
-
-          <h2 className="text-2xl font-semibold">
-            AI Mentor
-          </h2>
-
-          <p className="text-slate-400 mt-2">
-            Ask questions only about the generated solution.
-          </p>
-
-        </div>
-
-        <div className="h-[500px] overflow-y-auto p-6 space-y-5">
-
-          {history.length === 0 && (
-
-            <div className="text-center mt-28">
-
-              <h2 className="text-2xl font-semibold">
-                Ready to Learn 🚀
-              </h2>
-
-              <p className="text-slate-400 mt-3">
-                Ask anything about the generated solution.
-              </p>
-
-            </div>
-
-          )}
-
-          {history.map((msg, index) => (
-            <Message
-              key={index}
-              message={msg}
-            />
-          ))}
-
-          {loading && (
-
-            <div className="message assistant">
-
-              <div className="bubble">
-
-                Thinking...
-
-              </div>
-
-            </div>
-
-          )}
-
-          <div ref={bottomRef} />
-
-        </div>
-
-        <div className="border-t border-slate-800 p-6">
-
-          <textarea
-            rows={3}
-            value={question}
-            onChange={(e) =>
-              setQuestion(e.target.value)
-            }
-            onKeyDown={enter}
-            placeholder="Ask why the algorithm works, dry run, variables, loops..."
-            className="w-full bg-slate-800 rounded-xl p-4"
-          />
-
-          <div className="flex gap-4 mt-5">
-
-            <button
-              onClick={askAI}
-              className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-xl"
-            >
-              Ask Mentor
-            </button>
-
-            <button
-              onClick={generateNotes}
-              className="bg-emerald-600 hover:bg-emerald-700 px-8 py-3 rounded-xl"
-            >
-              Generate Study Notes
-            </button>
-
+    <div className="flex flex-col h-full min-h-0">
+      {/* Scrollable box */}
+      <div className="flex-1 overflow-y-auto pr-1 space-y-4 max-h-[320px]">
+        {history.length === 0 ? (
+          <div className="text-center py-16 space-y-1">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Session Active</h4>
+            <p className="text-[11px] text-slate-500 max-w-xs mx-auto leading-relaxed">
+              Query variable functions, loop structures, or save dynamic notes.
+            </p>
           </div>
+        ) : (
+          history.map((msg, index) => <Message key={index} message={msg} />)
+        )}
+        {loading && (
+          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-ping"></span>
+            Compiling...
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
 
+      {/* Inputs box */}
+      <div className="border-t border-slate-200 pt-4 mt-auto">
+        <textarea
+          rows={2}
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              askAI();
+            }
+          }}
+          placeholder="Ask why this loop works, request a dry run..."
+          className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-3 text-xs focus:border-blue-500 focus:bg-white outline-none resize-none transition"
+        />
+
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          <button
+            onClick={askAI}
+            className="bg-slate-100 hover:bg-slate-200/85 border border-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-semibold transition active:scale-[0.98]"
+          >
+            Ask Mentor
+          </button>
+          <button
+            onClick={generateNotes}
+            disabled={saving}
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-xs font-semibold transition disabled:opacity-50 active:scale-[0.98]"
+          >
+            {saving ? "Compiling..." : "Generate Notes"}
+          </button>
         </div>
-
       </div>
 
       {notes && (
-
-        <div className="mt-10 rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden">
-
-          <div className="px-6 py-5 border-b border-slate-800">
-
-            <h2 className="text-2xl font-semibold">
-              Study Notes
-            </h2>
-
-          </div>
-
-          <div className="p-8">
-
-            <Message
-              message={{
-                role: "assistant",
-                content: notes,
-              }}
-            />
-
-          </div>
-
+        <div className="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4 overflow-y-auto max-h-[140px]">
+          <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Revision Materials</h4>
+          <Message message={{ role: "assistant", content: notes }} />
         </div>
-
       )}
-    </>
+    </div>
   );
 }

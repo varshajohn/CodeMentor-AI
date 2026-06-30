@@ -11,9 +11,11 @@ const generatePDF = (session, res) => {
     "application/pdf"
   );
 
+  const titleSafe = session.title ? session.title.replace(/[^a-zA-Z0-9]/g, "_") : "Study_Notes";
+
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="${session.title}.pdf"`
+    `attachment; filename="${titleSafe}.pdf"`
   );
 
   doc.pipe(res);
@@ -39,43 +41,54 @@ const generatePDF = (session, res) => {
   /* ----------------------------- */
 
   doc
-    .fontSize(15)
+    .fontSize(14)
+    .fillColor("#1e293b")
     .text("Problem Statement", {
       underline: true,
     });
 
+  doc.moveDown(0.5);
+
   doc
-    .fontSize(12)
-    .text(session.prompt);
+    .fontSize(11)
+    .fillColor("black")
+    .text(session.prompt || "No problem statement provided.");
 
   doc.moveDown();
 
   /* ----------------------------- */
 
   doc
-    .fontSize(15)
+    .fontSize(14)
+    .fillColor("#1e293b")
     .text("Programming Language", {
       underline: true,
     });
 
+  doc.moveDown(0.5);
+
   doc
-    .fontSize(12)
-    .text(session.language);
+    .fontSize(11)
+    .fillColor("black")
+    .text(session.language || "Not specified");
 
   doc.moveDown();
 
   /* ----------------------------- */
 
   doc
-    .fontSize(15)
+    .fontSize(14)
+    .fillColor("#1e293b")
     .text("Generated Code", {
       underline: true,
     });
 
+  doc.moveDown(0.5);
+
   doc
     .font("Courier")
-    .fontSize(10)
-    .text(session.generatedCode);
+    .fontSize(9)
+    .text(session.generatedCode || "No generated code available.");
 
   doc.moveDown();
 
@@ -83,15 +96,18 @@ const generatePDF = (session, res) => {
 
   doc
     .font("Helvetica")
-    .fontSize(15)
+    .fontSize(14)
+    .fillColor("#1e293b")
     .text("Optimized Code", {
       underline: true,
     });
 
+  doc.moveDown(0.5);
+
   doc
     .font("Courier")
-    .fontSize(10)
-    .text(session.optimizedCode);
+    .fontSize(9)
+    .text(session.optimizedCode || "No optimized code available.");
 
   doc.moveDown();
 
@@ -99,22 +115,26 @@ const generatePDF = (session, res) => {
 
   doc
     .font("Helvetica")
-    .fontSize(15)
-    .text("Study Notes", {
+    .fontSize(14)
+    .fillColor("#1e293b")
+    .text("Study Notes & Explanations", {
       underline: true,
     });
 
+  doc.moveDown(0.5);
+
   doc
     .font("Helvetica")
-    .fontSize(12)
-    .text(session.studyNotes);
+    .fontSize(10)
+    .fillColor("black")
+    .text(session.studyNotes || "No study notes generated yet.");
 
   doc.moveDown();
 
   /* ----------------------------- */
 
   doc
-    .fontSize(11)
+    .fontSize(10)
     .fillColor("gray")
     .text(
       "Generated using CodeMentor AI",
