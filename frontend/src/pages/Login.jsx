@@ -1,18 +1,29 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  FaEnvelope,
-  FaLock,
   FaArrowRight,
-  FaCode,
+  FaEye,
+  FaEyeSlash,
 } from "react-icons/fa";
+
+import {
+  MdAlternateEmail,
+} from "react-icons/md";
+
+import {
+  RiLockPasswordFill,
+} from "react-icons/ri";
+
+import {
+  TbBrain,
+} from "react-icons/tb";
 import api from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
-
+const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -73,18 +84,18 @@ export default function Login() {
 
           <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
 
-            <FaCode className="text-white text-3xl" />
+            <TbBrain className="text-white text-4xl" />
 
           </div>
 
         </div>
 
         <h1 className="text-3xl font-bold text-center">
-          CodeMentor AI
+          Welcome Back 
         </h1>
 
         <p className="text-center text-slate-400 mt-2 mb-8 text-sm">
-          Sign in to continue your coding journey.
+          Continue learning, optimizing and mastering code with AI.
         </p>
 
         <form
@@ -96,7 +107,7 @@ export default function Login() {
 
           <div className="relative">
 
-            <FaEnvelope className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <MdAlternateEmail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
 
             <input
               className="input pl-14"
@@ -112,18 +123,26 @@ export default function Login() {
           {/* Password */}
 
           <div className="relative">
+<RiLockPasswordFill className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
 
-            <FaLock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+<input
+    className="input pl-14 pr-14"
+    placeholder="Password"
+    name="password"
+    type={showPassword ? "text" : "password"}
+    value={form.password}
+    onChange={changeHandler}
+/>
 
-            <input
-              className="input pl-14"
-              placeholder="Password"
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={changeHandler}
-            />
+<button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+>
 
+    {showPassword ? <FaEyeSlash /> : <FaEye />}
+
+</button>
           </div>
 
           {/* Button */}
@@ -136,7 +155,7 @@ export default function Login() {
               "Signing In..."
             ) : (
               <>
-                Login
+                Sign In
                 <FaArrowRight />
               </>
             )}

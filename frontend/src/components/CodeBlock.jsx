@@ -53,15 +53,40 @@ export default function CodeBlock({
 
           {/* macOS buttons */}
 
-          <div className="flex gap-2">
+          <div className="bg-[#0f172a] border-b border-white/10 px-5 py-3 flex items-center justify-between">
 
-            <div className="w-3 h-3 rounded-full bg-red-500" />
+    <span className="text-sm font-semibold text-slate-300 uppercase">
 
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+        {match ? match[1] : "CODE"}
 
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+    </span>
 
-          </div>
+    <button
+        onClick={copyCode}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition
+
+        ${
+            copied
+                ? "bg-green-600"
+                : "bg-indigo-600 hover:bg-indigo-500"
+        }`}
+    >
+
+        {copied ? (
+            <>
+                <FaCheck />
+                Copied
+            </>
+        ) : (
+            <>
+                <FaCopy />
+                Copy
+            </>
+        )}
+
+    </button>
+
+</div>
 
           <span className="text-sm text-slate-400 uppercase tracking-wider">
 

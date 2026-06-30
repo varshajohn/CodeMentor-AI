@@ -7,7 +7,8 @@ import api from "../services/api";
 import Message from "./Message";
 
 export default function ChatPanel({
-  code,
+    code,
+    activeTab,
   prompt,
   language,
   optimizedCode,
@@ -171,7 +172,11 @@ export default function ChatPanel({
         <textarea
           rows={3}
           className="input resize-none"
-          placeholder="Ask about variables, loops, recursion, dry run..."
+          placeholder={`Ask about the ${
+    activeTab === "optimized"
+        ? "professional"
+        : "beginner"
+} solution...`}
           value={question}
           onChange={(e) =>
             setQuestion(e.target.value)

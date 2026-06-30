@@ -3,11 +3,11 @@ import { FaCode, FaWandMagicSparkles } from "react-icons/fa6";
 import api from "../services/api";
 
 export default function CodeGenerator({
-    setPrompt,
-    setLanguage,
-    setGeneratedCode,
-    setOptimizedCode,
-    setComparison,
+  setPrompt,
+  setLanguage,
+  setGeneratedCode,
+  setOptimizedCode,
+  setComparison,
 }) {
   const [problem, setProblem] = useState("");
   const [language, setLang] = useState("Python");
@@ -19,191 +19,103 @@ export default function CodeGenerator({
     const invalid = [
       "hello",
       "hi",
-      "who is",
       "weather",
       "movie",
       "song",
       "joke",
-      "how are you",
-      "tell me",
       "good morning",
+      "who is",
+      "tell me about",
+      "capital of",
     ];
 
-    return !invalid.some((i) => lower.includes(i));
+    return !invalid.some((item) => lower.includes(item));
   }
 
-async function generate() {
-  if (!problem.trim()) {
-    alert("Please enter a programming problem.");
-    return;
-  }
-
-  if (!validateProblem(problem)) {
-    alert("Only programming-related questions are allowed.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    setPrompt(problem);
-    setLanguage(language);
-
-    /* ==========================
-       Generate Initial Solution
-    ========================== */
-
-    const generatedRes = await api.post("/ai/generate", {
-      prompt: problem,
-      language,
-    });
-
-    const generated = generatedRes.data.code;
-
-    setGeneratedCode(generated);
-
-    /* ==========================
-       Optimize Solution
-    ========================== */
-
-    const optimizeRes = await api.post("/ai/optimize", {
-      code: generated,
-      language,
-    });
-
-    let raw = optimizeRes.data.result.trim();
-
-    if (raw.startsWith("```")) {
-      raw = raw.replace(/^```(?:json)?\n?/i, "");
-      raw = raw.replace(/\n?```$/, "");
-    }
-
-    const parsed = JSON.parse(raw);
-    let comparisonMarkdown = `
-# 📊 Comparison
-
-| Metric | Generated | Optimized |
-|--------|-----------|-----------|
-| Time Complexity | Extract from generated output | ${parsed.timeComplexity || "N/A"} |
-| Space Complexity | Extract from generated output | ${parsed.spaceComplexity || "N/A"} |
-
----
-
-## Optimization Status
-
-${parsed.optimized ? "✅ Improved" : "⚠ Already Optimal"}
-
----
-
-## Reason
-
-${parsed.reason}
-
----
-
-## Changes
-
-`;
-
-if (parsed.changes.length > 0) {
-
-  comparisonMarkdown += parsed.changes
-    .map((c) => `- ${c}`)
-    .join("\n");
-
-} else {
-
-  comparisonMarkdown +=
-    "- No algorithmic improvement was possible.";
-
-}
-
-setComparison(comparisonMarkdown);
-
-    /* ==========================
-       Already Optimal
-    ========================== */
-
-    if (!parsed.optimized) {
-
-      setOptimizedCode(`
-
-# Already Optimal ✅
-
-### Reason
-
-${parsed.reason}
-
----
-
-## Current Code
-
-\`\`\`${language.toLowerCase()}
-${parsed.optimizedCode}
-\`\`\`
-
-`);
-
+  async function generate() {
+    if (!problem.trim()) {
+      alert("Please enter a programming problem.");
       return;
     }
 
-    /* ==========================
-       Optimized
-    ========================== */
+    if (!validateProblem(problem)) {
+      alert("Only programming related questions are allowed.");
+      return;
+    }
 
-    setOptimizedCode(`
+    try {
+      setLoading(true);
 
-# Optimized Solution ✅
+      setPrompt(problem);
+      setLanguage(language);
 
-### Why is it better?
+      /* =====================================
+         STEP 1 - Beginner Friendly Solution
+      ===================================== */
 
-${parsed.reason}
+      const generatedRes = await api.post("/ai/generate", {
+        prompt: problem,
+        language,
+      });
+
+      const beginnerSolution = generatedRes.data.code;
+
+      setGeneratedCode(beginnerSolution);
+/* =====================================
+   Extract only the generated code block
+===================================== */
+
+const match = beginnerSolution.match(/```[\w]*\n([\s\S]*?)```/);
+
+const extractedCode = match
+  ? match[1].trim()
+  : beginnerSolution;
+      /* =====================================
+         STEP 2 - Professional Optimization
+      ===================================== */
+
+const optimizeRes = await api.post("/ai/optimize", {
+    code: extractedCode,
+    language,
+});
+const professionalSolution = optimizeRes.data.result;
+
+setOptimizedCode(professionalSolution);
+
+setComparison(`
+# 📊 Beginner vs Professional
+
+## Beginner Solution
+
+- Easy to understand
+- Uses simple logic
+- Suitable for learning programming
 
 ---
 
-## Optimized Code
+## Professional Solution
 
-\`\`\`${language.toLowerCase()}
-${parsed.optimizedCode}
-\`\`\`
-
----
-
-## Time Complexity
-
-${parsed.timeComplexity}
+- Uses language-specific best practices
+- Uses built-in methods where possible
+- Cleaner and shorter implementation
+- Better readability
+- More interview ready
 
 ---
 
-## Space Complexity
-
-${parsed.spaceComplexity}
-
----
-
-## Improvements
-
-${parsed.changes.length
-  ? parsed.changes.map((c) => `- ${c}`).join("\n")
-  : "- General code cleanup"}
-
+Compare both tabs to understand how professional developers improve beginner code.
 `);
-
-  } catch (err) {
-
-    console.log(err);
-
-    alert("Failed to generate solution.");
-
-  } finally {
-
-    setLoading(false);
-
+    } catch (err) {
+      console.log(err);
+      alert("Failed to generate solution.");
+    } finally {
+      setLoading(false);
+    }
   }
-}
-
-  return (
+    return (
     <div className="space-y-8">
+
+      {/* Heading */}
 
       <div>
 
@@ -212,42 +124,39 @@ ${parsed.changes.length
           <FaCode className="text-indigo-400 text-xl" />
 
           <h2 className="text-2xl font-bold">
-            Describe your coding problem
+            Describe Your Coding Problem
           </h2>
 
         </div>
-
-        <p className="text-slate-400 text-sm mb-5">
-          Paste a coding problem or describe it in detail.
-        </p>
 
         <textarea
           rows={8}
           value={problem}
           onChange={(e) => setProblem(e.target.value)}
-          placeholder="Example:
-
-Given an array of integers nums and an integer target,
-return the indices of the two numbers such that they add up to target..."
           className="input resize-none"
         />
 
-        <div className="flex justify-end mt-2">
+        <div className="flex justify-between items-center mt-3">
 
           <span className="text-xs text-slate-500">
-            {problem.length} characters
+          </span>
+
+          <span className="text-xs text-slate-500">
+            {problem.length} Characters
           </span>
 
         </div>
 
       </div>
 
-      <div className="flex gap-6 items-end flex-wrap">
+      {/* Bottom Controls */}
+
+      <div className="flex flex-wrap items-end gap-6">
 
         <div className="w-64">
 
           <label className="block mb-2 text-sm text-slate-400">
-            Programming Language
+            Language
           </label>
 
           <select
@@ -274,11 +183,13 @@ return the indices of the two numbers such that they add up to target..."
 
           {loading
             ? "Generating..."
-            : "Generate Solution"}
+            : "Generate"}
 
         </button>
 
       </div>
+
+      {/* Info Cards */}
 
     </div>
   );

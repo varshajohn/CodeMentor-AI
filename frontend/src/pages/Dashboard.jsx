@@ -28,13 +28,13 @@ const [comparison, setComparison] = useState("");
 
           <div>
 
-            <h1 className="text-4xl font-bold">
-              AI Workspace
-            </h1>
+           <h1 className="text-3xl font-semibold tracking-tight">
+    CodeMentor AI
+</h1>
 
-            <p className="text-slate-400 mt-2">
-              Generate • Optimize • Learn
-            </p>
+<p className="text-sm text-slate-500 mt-1">
+    AI Coding Assistant
+</p>
 
           </div>
 
@@ -76,7 +76,7 @@ const [comparison, setComparison] = useState("");
         : "hover:bg-white/5"
     }`}
   >
-    Generated
+    Beginner
   </button>
 
   <button
@@ -87,7 +87,7 @@ const [comparison, setComparison] = useState("");
         : "hover:bg-white/5"
     }`}
   >
-    Optimized
+    Professional
   </button>
 
   <button
@@ -136,7 +136,7 @@ const [comparison, setComparison] = useState("");
                   </h2>
 
                   <p className="text-slate-400 text-sm mt-2">
-                    Ask anything about this solution.
+                    Ask anything about the selected solution.
                   </p>
 
                 </div>
@@ -144,13 +144,18 @@ const [comparison, setComparison] = useState("");
                 <div className="h-[610px] p-6">
 
                   <ChatPanel
-                    code={generatedCode}
-                    prompt={prompt}
-                    language={language}
-                    optimizedCode={optimizedCode}
-                    history={history}
-                    setHistory={setHistory}
-                  />
+    code={
+        activeTab === "optimized"
+            ? optimizedCode
+            : generatedCode
+    }
+    prompt={prompt}
+    language={language}
+    optimizedCode={optimizedCode}
+    history={history}
+    setHistory={setHistory}
+    activeTab={activeTab}
+/>
 
                 </div>
 
