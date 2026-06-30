@@ -3,20 +3,15 @@ import {
   FaHistory,
   FaSignOutAlt,
   FaRobot,
+  FaRegComments,
 } from "react-icons/fa";
-
-import {
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const user = JSON.parse(
-    localStorage.getItem("user") || "{}"
-  );
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   function logout() {
     localStorage.removeItem("user");
@@ -37,136 +32,58 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex w-72 p-5">
-
-      <div className="glass rounded-3xl flex flex-col w-full">
-
-        {/* Logo */}
-
-        <div className="p-8 border-b border-white/10">
-
-          <div className="flex items-center gap-4">
-
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
-
-              <FaRobot className="text-2xl text-white" />
-
-            </div>
-
-            <div>
-
-              <h2 className="text-xl font-bold">
-                CodeMentor
-              </h2>
-
-              <p className="text-slate-400 text-sm">
-                AI Coding Assistant
-              </p>
-
-            </div>
-
-          </div>
-
+    <aside className="hidden md:flex flex-col items-center w-20 bg-[#080d19] border-r border-white/5 py-6 justify-between h-screen sticky top-0">
+      {/* Top Logo */}
+      <div className="flex flex-col items-center gap-6">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg cursor-pointer" onClick={() => navigate("/dashboard")}>
+          <FaRobot className="text-xl text-white" />
         </div>
-
-        {/* Navigation */}
-
-        <div className="flex-1 px-5 py-8 space-y-4">
-
-          {menu.map((item) => {
-
-            const active =
-              location.pathname === item.path;
-
-            return (
-
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-4 rounded-2xl px-5 py-4 transition-all duration-300
-
-                ${
-                  active
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg"
-                    : "hover:bg-white/5"
-                }`}
-              >
-
-                <div
-                  className={`text-xl ${
-                    active
-                      ? "text-white"
-                      : "text-slate-400"
-                  }`}
-                >
-                  {item.icon}
-                </div>
-
-                <span
-                  className={`font-medium ${
-                    active
-                      ? "text-white"
-                      : "text-slate-300"
-                  }`}
-                >
-                  {item.name}
-                </span>
-
-              </button>
-
-            );
-
-          })}
-
-        </div>
-
-        {/* User */}
-
-        <div className="border-t border-white/10 p-6">
-
-          <div className="flex items-center gap-4 mb-5">
-
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-lg">
-
-              {user?.name
-                ? user.name.charAt(0).toUpperCase()
-                : "U"}
-
-            </div>
-
-            <div>
-
-              <h4 className="font-semibold">
-
-                {user?.name || "User"}
-
-              </h4>
-
-              <p className="text-xs text-slate-400 truncate">
-
-                {user?.email}
-
-              </p>
-
-            </div>
-
-          </div>
-
-          <button
-            onClick={logout}
-            className="secondary-btn w-full flex justify-center items-center gap-3"
-          >
-
-            <FaSignOutAlt />
-
-            Logout
-
-          </button>
-
-        </div>
-
       </div>
 
+      {/* Navigation Icons */}
+      <div className="flex flex-col gap-4 w-full px-3">
+        {menu.map((item) => {
+          const active = location.pathname === item.path;
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              title={item.name}
+              className={`w-full aspect-square flex items-center justify-center rounded-2xl transition-all duration-300 ${
+                active
+                  ? "bg-[#6366f1]/20 text-[#8b5cf6]"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <span className="text-xl">{item.icon}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* User and Logout */}
+      <div className="flex flex-col items-center gap-6 w-full px-3">
+        {/* User Profile Circle with Active Green Indicator */}
+        <div className="relative group cursor-pointer">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-sm text-white border border-white/10">
+            {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+          </div>
+          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#080d19] rounded-full"></span>
+          
+          {/* Tooltip */}
+          <div className="absolute left-14 bottom-1 bg-slate-900 border border-white/10 text-xs text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+            {user?.name || "User"}
+          </div>
+        </div>
+
+        <button
+          onClick={logout}
+          title="Logout"
+          className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition duration-200"
+        >
+          <FaSignOutAlt className="text-lg" />
+        </button>
+      </div>
     </aside>
   );
 }

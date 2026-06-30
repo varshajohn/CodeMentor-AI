@@ -111,7 +111,6 @@ const [showPassword, setShowPassword] = useState(false);
 
             <input
               className="input pl-14"
-              placeholder="Email Address"
               name="email"
               type="email"
               value={form.email}
@@ -127,7 +126,6 @@ const [showPassword, setShowPassword] = useState(false);
 
 <input
     className="input pl-14 pr-14"
-    placeholder="Password"
     name="password"
     type={showPassword ? "text" : "password"}
     value={form.password}
