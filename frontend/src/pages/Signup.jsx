@@ -1,191 +1,176 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaUser, FaEnvelope, FaLock, FaCheckCircle, FaChevronRight } from "react-icons/fa";
+import {
+  FaUser,
+  FaEnvelope,
+  FaLock,
+  FaArrowRight,
+  FaCode,
+} from "react-icons/fa";
 import api from "../services/api";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
 
-  const handleSubmit = async (e) => {
+  function changeHandler(e) {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
+  }
+
+  async function submitHandler(e) {
     e.preventDefault();
+
     if (!form.name || !form.email || !form.password) {
-      alert("Please fill in all form details.");
+      alert("Please fill all fields.");
       return;
     }
 
     try {
       setLoading(true);
+
       await api.post("/auth/signup", form);
-      alert("Account created successfully. Please login.");
+
+      alert("Account created successfully.");
+
       navigate("/login");
-    } catch (error) {
-      alert(error.response?.data?.message || "Registration failed.");
+    } catch (err) {
+      alert(
+        err.response?.data?.message ||
+          "Signup Failed."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-slate-50">
-      
-      {/* Left Pane - Brand Showcase */}
-      <div className="hidden lg:flex lg:col-span-5 bg-gradient-to-br from-slate-50 via-indigo-50/40 to-blue-50/20 flex-col justify-between p-12 relative overflow-hidden border-r border-slate-200">
-        <div className="absolute -top-12 -left-12 w-80 h-80 bg-blue-300/20 blur-3xl rounded-full pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-96 h-96 bg-indigo-300/20 blur-3xl rounded-full pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden px-5">
+
+      {/* Background */}
+
+      <div className="absolute w-[500px] h-[500px] rounded-full bg-indigo-600/20 blur-[140px] top-[-150px] left-[-120px]" />
+
+      <div className="absolute w-[500px] h-[500px] rounded-full bg-purple-600/20 blur-[160px] bottom-[-180px] right-[-120px]" />
+
+      {/* Card */}
+
+      <div className="glass w-full max-w-md rounded-3xl p-10 fade-up">
 
         {/* Logo */}
-        <div className="relative flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white h-9 w-9 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
-            <span className="font-extrabold text-sm font-mono">&lt;/&gt;</span>
-          </div>
-          <span className="font-bold text-slate-900 tracking-tight text-sm">CodeMentor AI</span>
-        </div>
 
-        {/* Content Showcase */}
-        <div className="relative my-auto space-y-8 max-w-sm">
-          <div className="space-y-3">
-            <span className="inline-flex bg-indigo-100/70 border border-indigo-200/40 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
-              Get Started
-            </span>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              Interactive Coding Mentor
-            </h2>
-            <p className="text-slate-500 text-xs leading-relaxed">
-              Create your profile to start solving programming problems, analyzing complexities, and compiling notes.
-            </p>
+        <div className="flex justify-center mb-8">
+
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
+
+            <FaCode className="text-white text-3xl" />
+
           </div>
 
-          <ul className="space-y-4">
-            <li className="flex items-start gap-3">
-              <FaCheckCircle className="text-blue-600 mt-1 shrink-0 text-xs" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Smarter Solutions</h4>
-                <p className="text-[11px] text-slate-500">Baseline and performance-optimized outputs side-by-side.</p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <FaCheckCircle className="text-blue-600 mt-1 shrink-0 text-xs" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Concept Dry-Runs</h4>
-                <p className="text-[11px] text-slate-500">Engage with a dedicated mentor to break down complex logic lines.</p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <FaCheckCircle className="text-blue-600 mt-1 shrink-0 text-xs" />
-              <div>
-                <h4 className="text-xs font-bold text-slate-800">Complete Export</h4>
-                <p className="text-[11px] text-slate-500">Convert summaries and Q&A history logs into study PDFs.</p>
-              </div>
-            </li>
-          </ul>
         </div>
 
-        <div className="relative text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-          © CodeMentor AI Platform
-        </div>
-      </div>
+        <h1 className="text-3xl font-bold text-center">
+          Create Account
+        </h1>
 
-      {/* Right Pane - Form Workspace */}
-      <div className="col-span-12 lg:col-span-7 flex items-center justify-center p-8 sm:p-16 bg-white relative">
-        <div className="w-full max-w-md space-y-8">
-          
-          {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
-              Create Account
-            </h1>
-            <p className="text-slate-500 text-xs">
-              Join the platform to start generating and storing study references.
-            </p>
+        <p className="text-center text-slate-400 mt-2 mb-8 text-sm">
+          Join CodeMentor AI and start solving smarter.
+        </p>
+
+        <form
+          onSubmit={submitHandler}
+          className="space-y-5"
+        >
+
+          {/* Name */}
+
+          <div className="relative">
+
+            <FaUser className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+
+            <input
+              className="input pl-14"
+              type="text"
+              placeholder="Full Name"
+              name="name"
+              value={form.name}
+              onChange={changeHandler}
+            />
+
           </div>
 
-          {/* Form container with generous spacing */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Full Name
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <FaUser className="text-sm" />
-                </div>
-                <input
-                  className="w-full bg-slate-50/50 hover:bg-slate-100/30 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-xl text-sm outline-none transition duration-150 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                  placeholder="John Doe"
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+          {/* Email */}
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <FaEnvelope className="text-sm" />
-                </div>
-                <input
-                  className="w-full bg-slate-50/50 hover:bg-slate-100/30 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-xl text-sm outline-none transition duration-150 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                  placeholder="name@domain.com"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+          <div className="relative">
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                  <FaLock className="text-sm" />
-                </div>
-                <input
-                  className="w-full bg-slate-50/50 hover:bg-slate-100/30 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-xl text-sm outline-none transition duration-150 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                  type="password"
-                  placeholder="••••••••"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
+            <FaEnvelope className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white font-semibold py-3.5 rounded-xl text-sm shadow-md shadow-indigo-500/10 transition-all duration-150 disabled:opacity-50 mt-4 flex items-center justify-center gap-2 active:scale-[0.99]"
-            >
-              <span>{loading ? "Registering..." : "Register"}</span>
-              {!loading && <FaChevronRight className="text-xs mt-0.5" />}
-            </button>
-          </form>
+            <input
+              className="input pl-14"
+              type="email"
+              placeholder="Email Address"
+              name="email"
+              value={form.email}
+              onChange={changeHandler}
+            />
 
-          {/* Redirect Option */}
-          <p className="text-xs text-slate-500 text-center pt-4">
-            Already registered?{" "}
-            <Link className="text-blue-600 font-bold hover:underline" to="/login">
-              Login
-            </Link>
-          </p>
+          </div>
+
+          {/* Password */}
+
+          <div className="relative">
+
+            <FaLock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
+
+            <input
+              className="input pl-14"
+              type="password"
+              placeholder="Password"
+              name="password"
+              value={form.password}
+              onChange={changeHandler}
+            />
+
+          </div>
+
+          <button
+            disabled={loading}
+            className="primary-btn w-full flex items-center justify-center gap-3 mt-2"
+          >
+            {loading ? (
+              "Creating Account..."
+            ) : (
+              <>
+                Create Account
+                <FaArrowRight />
+              </>
+            )}
+          </button>
+
+        </form>
+
+        <div className="mt-8 text-center text-sm text-slate-400">
+
+          Already have an account?
+
+          <Link
+            to="/login"
+            className="text-indigo-400 font-semibold ml-2 hover:text-indigo-300"
+          >
+            Login
+          </Link>
 
         </div>
+
       </div>
 
     </div>

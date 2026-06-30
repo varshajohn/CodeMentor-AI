@@ -1,7 +1,14 @@
 import { useState } from "react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import {
+  FaCopy,
+  FaCheck,
+} from "react-icons/fa";
+
+import {
+  Prism as SyntaxHighlighter,
+} from "react-syntax-highlighter";
+
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { FaCopy, FaCheck } from "react-icons/fa";
 
 export default function CodeBlock({
   inline,
@@ -10,29 +17,25 @@ export default function CodeBlock({
 }) {
   const [copied, setCopied] = useState(false);
 
-  const match = /language-(\w+)/.exec(className || "");
+  const match =
+    /language-(\w+)/.exec(className || "");
 
   const code = String(children).replace(/\n$/, "");
 
-  async function copy() {
+  async function copyCode() {
     await navigator.clipboard.writeText(code);
 
     setCopied(true);
 
     setTimeout(() => {
       setCopied(false);
-    }, 2000);
+    }, 1800);
   }
 
   if (inline) {
     return (
       <code
-        style={{
-          background: "#1e293b",
-          padding: "3px 8px",
-          borderRadius: "6px",
-          color: "#38bdf8",
-        }}
+        className="px-2 py-1 rounded-md bg-indigo-500/20 text-indigo-300 font-mono text-[14px]"
       >
         {children}
       </code>
@@ -40,62 +43,88 @@ export default function CodeBlock({
   }
 
   return (
-    <div
-      style={{
-        marginTop: "25px",
-        marginBottom: "25px",
-        borderRadius: "16px",
-        overflow: "hidden",
-        border: "1px solid #334155",
-      }}
-    >
-      <div
-        style={{
-          background: "#111827",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "12px 18px",
-          borderBottom: "1px solid #334155",
-        }}
-      >
-        <span
-          style={{
-            color: "#94a3b8",
-            fontSize: "14px",
-            textTransform: "uppercase",
-          }}
-        >
-          {match ? match[1] : "code"}
-        </span>
+    <div className="my-8 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+
+      {/* Header */}
+
+      <div className="bg-[#0f172a] border-b border-white/10 px-5 py-3 flex items-center justify-between">
+
+        <div className="flex items-center gap-4">
+
+          {/* macOS buttons */}
+
+          <div className="flex gap-2">
+
+            <div className="w-3 h-3 rounded-full bg-red-500" />
+
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+
+          </div>
+
+          <span className="text-sm text-slate-400 uppercase tracking-wider">
+
+            {match
+              ? match[1]
+              : "CODE"}
+
+          </span>
+
+        </div>
 
         <button
-          onClick={copy}
-          style={{
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            padding: "8px 14px",
-            borderRadius: "8px",
-          }}
+          onClick={copyCode}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition
+
+          ${
+            copied
+              ? "bg-green-600"
+              : "bg-indigo-600 hover:bg-indigo-500"
+          }`}
         >
-          {copied ? <FaCheck /> : <FaCopy />}
+
+          {copied ? (
+            <>
+              <FaCheck />
+
+              Copied
+            </>
+          ) : (
+            <>
+              <FaCopy />
+
+              Copy
+            </>
+          )}
+
         </button>
+
       </div>
 
+      {/* Code */}
+
       <SyntaxHighlighter
-        language={match ? match[1] : "javascript"}
+        language={
+          match
+            ? match[1]
+            : "javascript"
+        }
         style={oneDark}
         showLineNumbers
+        wrapLongLines
         customStyle={{
           margin: 0,
-          padding: "24px",
+          padding: "28px",
+          background: "#020617",
           fontSize: "15px",
-          background: "#0f172a",
+          borderRadius: 0,
+          minHeight: "100%",
         }}
       >
         {code}
       </SyntaxHighlighter>
+
     </div>
   );
 }

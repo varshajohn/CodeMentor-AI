@@ -1,78 +1,166 @@
 import { useState } from "react";
+import { FaCode, FaWandMagicSparkles } from "react-icons/fa6";
 import api from "../services/api";
 
-const SAMPLE_PROBLEMS = [
-  { title: "Two Sum", text: "Find indices of the two numbers such that they add up to target." },
-  { title: "Reverse Linked List", text: "Given the head of a singly linked list, reverse the list." },
-  { title: "Binary Search", text: "Search for a target value in a sorted array of integers." },
-  { title: "Merge Sort", text: "Sort an array of integers in ascending order." }
-];
-
 export default function CodeGenerator({
-  setPrompt,
-  setLanguage,
-  setGeneratedCode,
-  setOptimizedCode,
+    setPrompt,
+    setLanguage,
+    setGeneratedCode,
+    setOptimizedCode,
+    setComparison,
 }) {
   const [problem, setProblem] = useState("");
   const [language, setLang] = useState("Python");
   const [loading, setLoading] = useState(false);
 
-  const validateProblem = (text) => {
-    const lower = text.toLowerCase().trim();
-    if (!lower) return false;
+  function validateProblem(text) {
+    const lower = text.toLowerCase();
 
-    const invalidKeywords = [
-      "can i", "what is python", "who is", "tell me", "joke", "hello",
-      "hi", "good morning", "how are you", "weather", "movie", "song", "history"
+    const invalid = [
+      "hello",
+      "hi",
+      "who is",
+      "weather",
+      "movie",
+      "song",
+      "joke",
+      "how are you",
+      "tell me",
+      "good morning",
     ];
 
-    return !invalidKeywords.some((word) => lower.includes(word));
-  };
+    return !invalid.some((i) => lower.includes(i));
+  }
 
-  const generate = async () => {
-    if (!problem.trim()) {
-      alert("Please specify a problem statement.");
+async function generate() {
+  if (!problem.trim()) {
+    alert("Please enter a programming problem.");
+    return;
+  }
+
+  if (!validateProblem(problem)) {
+    alert("Only programming-related questions are allowed.");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    setPrompt(problem);
+    setLanguage(language);
+
+    /* ==========================
+       Generate Initial Solution
+    ========================== */
+
+    const generatedRes = await api.post("/ai/generate", {
+      prompt: problem,
+      language,
+    });
+
+    const generated = generatedRes.data.code;
+
+    setGeneratedCode(generated);
+
+    /* ==========================
+       Optimize Solution
+    ========================== */
+
+    const optimizeRes = await api.post("/ai/optimize", {
+      code: generated,
+      language,
+    });
+
+    let raw = optimizeRes.data.result.trim();
+
+    if (raw.startsWith("```")) {
+      raw = raw.replace(/^```(?:json)?\n?/i, "");
+      raw = raw.replace(/\n?```$/, "");
+    }
+
+    const parsed = JSON.parse(raw);
+    let comparisonMarkdown = `
+# 📊 Comparison
+
+| Metric | Generated | Optimized |
+|--------|-----------|-----------|
+| Time Complexity | Extract from generated output | ${parsed.timeComplexity || "N/A"} |
+| Space Complexity | Extract from generated output | ${parsed.spaceComplexity || "N/A"} |
+
+---
+
+## Optimization Status
+
+${parsed.optimized ? "✅ Improved" : "⚠ Already Optimal"}
+
+---
+
+## Reason
+
+${parsed.reason}
+
+---
+
+## Changes
+
+`;
+
+if (parsed.changes.length > 0) {
+
+  comparisonMarkdown += parsed.changes
+    .map((c) => `- ${c}`)
+    .join("\n");
+
+} else {
+
+  comparisonMarkdown +=
+    "- No algorithmic improvement was possible.";
+
+}
+
+setComparison(comparisonMarkdown);
+
+    /* ==========================
+       Already Optimal
+    ========================== */
+
+    if (!parsed.optimized) {
+
+      setOptimizedCode(`
+
+# Already Optimal ✅
+
+### Reason
+
+${parsed.reason}
+
+---
+
+## Current Code
+
+\`\`\`${language.toLowerCase()}
+${parsed.optimizedCode}
+\`\`\`
+
+`);
+
       return;
     }
 
-    if (!validateProblem(problem)) {
-      alert("Please input a valid programming problem description.");
-      return;
-    }
+    /* ==========================
+       Optimized
+    ========================== */
 
-    try {
-      setLoading(true);
-      setPrompt(problem);
-      setLanguage(language);
+    setOptimizedCode(`
 
-      const codeRes = await api.post("/ai/generate", {
-        prompt: problem,
-        language,
-      });
+# Optimized Solution ✅
 
-      const generated = codeRes.data.code;
-      setGeneratedCode(generated);
+### Why is it better?
 
-      const optimizeRes = await api.post("/ai/optimize", {
-        code: generated,
-        language,
-      });
+${parsed.reason}
 
-      let optimized = optimizeRes.data.result;
+---
 
-      try {
-        let cleanResult = optimized.trim();
-        if (cleanResult.startsWith("```")) {
-          cleanResult = cleanResult.replace(/^```(?:json)?\n?/i, "");
-          cleanResult = cleanResult.replace(/\n?```$/, "");
-          cleanResult = cleanResult.trim();
-        }
-        
-        const parsed = JSON.parse(cleanResult);
-
-        setOptimizedCode(
-          `
 ## Optimized Code
 
 \`\`\`${language.toLowerCase()}
@@ -81,75 +169,91 @@ ${parsed.optimizedCode}
 
 ---
 
-## Performance Changes
+## Time Complexity
 
-${parsed.explanation}
+${parsed.timeComplexity}
 
-### Complexities
-- **Time Complexity:** ${parsed.timeComplexity || "N/A"}
-- **Space Complexity:** ${parsed.spaceComplexity || "N/A"}
+---
 
-### Code Changes
-${parsed.changes && Array.isArray(parsed.changes) 
-  ? parsed.changes.map(change => `- ${change}`).join("\n") 
-  : "Optimization applied."}
-`
-        );
-      } catch {
-        setOptimizedCode(optimizeRes.data.result);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to compute solution.");
-    } finally {
-      setLoading(false);
-    }
-  };
+## Space Complexity
+
+${parsed.spaceComplexity}
+
+---
+
+## Improvements
+
+${parsed.changes.length
+  ? parsed.changes.map((c) => `- ${c}`).join("\n")
+  : "- General code cleanup"}
+
+`);
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert("Failed to generate solution.");
+
+  } finally {
+
+    setLoading(false);
+
+  }
+}
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+
       <div>
-        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5">
-          Programming Problem Description
-        </label>
+
+        <div className="flex items-center gap-3 mb-3">
+
+          <FaCode className="text-indigo-400 text-xl" />
+
+          <h2 className="text-2xl font-bold">
+            Describe your coding problem
+          </h2>
+
+        </div>
+
+        <p className="text-slate-400 text-sm mb-5">
+          Paste a coding problem or describe it in detail.
+        </p>
+
         <textarea
-          rows={4}
+          rows={8}
           value={problem}
           onChange={(e) => setProblem(e.target.value)}
-          placeholder="Describe your coding challenge or copy a problem statement..."
-          className="w-full bg-slate-50 border border-slate-200 text-slate-900 p-4 rounded-xl text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none resize-none transition"
+          placeholder="Example:
+
+Given an array of integers nums and an integer target,
+return the indices of the two numbers such that they add up to target..."
+          className="input resize-none"
         />
-      </div>
 
-      {/* Suggestion tags */}
-      <div>
-        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">
-          Or select a common pattern
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {SAMPLE_PROBLEMS.map((sample, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setProblem(sample.text)}
-              className="text-left bg-slate-50 hover:bg-slate-100/80 border border-slate-200 p-3.5 rounded-xl transition active:scale-[0.98]"
-            >
-              <div className="font-bold text-xs text-blue-600 mb-0.5">{sample.title}</div>
-              <p className="text-[10px] text-slate-500 line-clamp-1 leading-normal">{sample.text}</p>
-            </button>
-          ))}
+        <div className="flex justify-end mt-2">
+
+          <span className="text-xs text-slate-500">
+            {problem.length} characters
+          </span>
+
         </div>
+
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-end border-t border-slate-200/60 pt-5 mt-2">
-        <div className="flex-1 w-full">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-            Target Language
+      <div className="flex gap-6 items-end flex-wrap">
+
+        <div className="w-64">
+
+          <label className="block mb-2 text-sm text-slate-400">
+            Programming Language
           </label>
+
           <select
+            className="input"
             value={language}
             onChange={(e) => setLang(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 text-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition"
           >
             <option>Python</option>
             <option>Java</option>
@@ -157,16 +261,25 @@ ${parsed.changes && Array.isArray(parsed.changes)
             <option>C++</option>
             <option>JavaScript</option>
           </select>
+
         </div>
 
         <button
-          disabled={loading}
           onClick={generate}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl text-sm transition shrink-0 active:scale-[0.98]"
+          disabled={loading}
+          className="primary-btn flex items-center gap-3 h-[54px]"
         >
-          {loading ? "Generating..." : "Generate Solution"}
+
+          <FaWandMagicSparkles />
+
+          {loading
+            ? "Generating..."
+            : "Generate Solution"}
+
         </button>
+
       </div>
+
     </div>
   );
 }

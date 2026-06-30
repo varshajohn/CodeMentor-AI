@@ -3,37 +3,69 @@ import remarkGfm from "remark-gfm";
 import CodeBlock from "../components/CodeBlock";
 
 export default function Message({ message }) {
-  const content = message.content || "";
+  const isUser = message.role === "user";
 
   return (
     <div
-      className={`message ${
-        message.role === "user"
-          ? "user"
-          : "assistant"
+      className={`flex mb-6 ${
+        isUser ? "justify-end" : "justify-start"
       }`}
     >
-      <div className="bubble fade">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            code({ node, className, children, ...props }) {
-              const match = /language-(\w+)/.exec(className || "");
-              const isInline = !match;
-              return (
-                <CodeBlock
-                  inline={isInline}
-                  className={className}
-                  {...props}
-                >
-                  {children}
-                </CodeBlock>
-              );
-            },
-          }}
-        >
-          {content}
-        </ReactMarkdown>
+      <div
+        className={`max-w-[90%] rounded-3xl px-5 py-4 shadow-lg transition-all duration-300
+
+        ${
+          isUser
+            ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-lg"
+            : "glass text-slate-100 rounded-bl-lg"
+        }`}
+      >
+        {!isUser && (
+          <div className="flex items-center gap-2 mb-3">
+
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-sm font-bold">
+
+              AI
+
+            </div>
+
+            <span className="font-semibold text-sm">
+
+              CodeMentor AI
+
+            </span>
+
+          </div>
+        )}
+
+        <div className="prose prose-invert max-w-none text-sm leading-7">
+
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              code({
+                inline,
+                className,
+                children,
+                ...props
+              }) {
+                return (
+                  <CodeBlock
+                    inline={inline}
+                    className={className}
+                    {...props}
+                  >
+                    {children}
+                  </CodeBlock>
+                );
+              },
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
+
+        </div>
+
       </div>
     </div>
   );

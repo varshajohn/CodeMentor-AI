@@ -1,14 +1,25 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {
+  FaDownload,
+  FaCode,
+  FaComments,
+  FaBookOpen,
+  FaCalendarAlt,
+} from "react-icons/fa";
+
 import Sidebar from "./Sidebar";
 import Message from "./Message";
 import api, { BACKEND_URL } from "../services/api";
 
 export default function Session() {
   const { id } = useParams();
+
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("code");
+
+  const [activeTab, setActiveTab] =
+    useState("code");
 
   useEffect(() => {
     loadSession();
@@ -16,10 +27,13 @@ export default function Session() {
 
   async function loadSession() {
     try {
-      const res = await api.get(`/session/${id}`);
+      const res = await api.get(
+        `/session/${id}`
+      );
+
       setSession(res.data.session);
     } catch (err) {
-      console.error(err);
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -27,134 +41,331 @@ export default function Session() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-400 flex items-center justify-center text-xs uppercase font-bold tracking-wider animate-pulse">
-        Loading Session Data...
+      <div className="min-h-screen flex justify-center items-center">
+
+        <h2 className="text-slate-400 text-xl">
+
+          Loading Session...
+
+        </h2>
+
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex items-center justify-center text-sm font-semibold">
-        Session Not Found
+      <div className="min-h-screen flex justify-center items-center">
+
+        <h2 className="text-2xl">
+
+          Session Not Found
+
+        </h2>
+
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex">
+    <div className="min-h-screen flex">
+
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-6">
-          
-          {/* Header row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 pb-6 gap-4">
-            <div className="space-y-1">
-              <span className="text-[10px] bg-blue-50 border border-blue-100 text-blue-600 px-2.5 py-1 rounded font-bold uppercase tracking-wider">
-                {session.language || "N/A"}
+      <main className="flex-1 p-8 overflow-y-auto">
+
+        {/* Header */}
+
+        <div className="glass rounded-3xl p-8 mb-8">
+
+          <div className="flex flex-wrap justify-between gap-6 items-center">
+
+            <div>
+
+              <span className="badge">
+
+                {session.language}
+
               </span>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 pt-2">
-                {session.title || "Workshop Reference"}
+
+              <h1 className="text-4xl font-bold mt-4">
+
+                {session.title}
+
               </h1>
-              <p className="text-slate-400 text-[10px] font-medium">
-                Saved on {new Date(session.createdAt).toLocaleString()}
-              </p>
+
+              <div className="flex items-center gap-3 mt-3 text-slate-400">
+
+                <FaCalendarAlt />
+
+                {new Date(
+                  session.createdAt
+                ).toLocaleString()}
+
+              </div>
+
             </div>
 
             <a
               href={`${BACKEND_URL}/api/pdf/${session._id}`}
               target="_blank"
               rel="noreferrer"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition shadow-sm active:scale-[0.98]"
+              className="primary-btn flex items-center gap-3"
             >
-              Export to PDF
+
+              <FaDownload />
+
+              Download PDF
+
             </a>
+
           </div>
 
-          {/* Nav Tab Switches */}
-          <div className="flex bg-slate-100 border border-slate-200 p-1.5 rounded-xl max-w-sm">
-            {["code", "mentor", "notes"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 text-center py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition ${
-                  activeTab === tab
-                    ? "bg-white text-blue-600 shadow-xs border border-slate-200"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* Panels */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-xs min-h-[350px]">
-            {activeTab === "code" && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Original Prompt</h3>
-                  <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">{session.prompt}</p>
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
-                  <div>
-                    <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2">Baseline Version</h4>
-                    <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4">
-                      <Message message={{ role: "assistant", content: session.generatedCode }} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Optimized Version</h4>
-                    <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4">
-                      <Message message={{ role: "assistant", content: session.optimizedCode || "*No performance data saved.*" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "mentor" && (
-              <div className="space-y-4">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Dialogue Log</h3>
-                {!session.chatHistory || session.chatHistory.length === 0 ? (
-                  <p className="text-slate-400 text-xs">No conversations recorded for this session.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {session.chatHistory.map((chat, idx) => (
-                      <div key={idx} className="space-y-2 border-b border-slate-100 pb-4 last:border-0">
-                        <div className="flex justify-end">
-                          <div className="bg-blue-600 text-white rounded-xl px-4 py-2 text-xs max-w-lg shadow-xs">
-                            {chat.question}
-                          </div>
-                        </div>
-                        <div className="flex justify-start">
-                          <div className="bg-slate-50/50 border border-slate-200 rounded-xl p-4 text-xs w-full">
-                            <Message message={{ role: "assistant", content: chat.answer }} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === "notes" && (
-              <div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Revision Notes</h3>
-                {!session.studyNotes ? (
-                  <p className="text-slate-400 text-xs">No notes generated for this session.</p>
-                ) : (
-                  <Message message={{ role: "assistant", content: session.studyNotes }} />
-                )}
-              </div>
-            )}
-          </div>
         </div>
+
+        {/* Tabs */}
+
+        <div className="glass rounded-3xl p-2 flex gap-2 mb-8">
+
+          <button
+            onClick={() =>
+              setActiveTab("code")
+            }
+            className={`flex-1 py-4 rounded-2xl transition flex justify-center items-center gap-3
+
+            ${
+              activeTab === "code"
+                ? "bg-indigo-600"
+                : "hover:bg-white/5"
+            }`}
+          >
+
+            <FaCode />
+
+            Code
+
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab("mentor")
+            }
+            className={`flex-1 py-4 rounded-2xl transition flex justify-center items-center gap-3
+
+            ${
+              activeTab === "mentor"
+                ? "bg-indigo-600"
+                : "hover:bg-white/5"
+            }`}
+          >
+
+            <FaComments />
+
+            Mentor
+
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab("notes")
+            }
+            className={`flex-1 py-4 rounded-2xl transition flex justify-center items-center gap-3
+
+            ${
+              activeTab === "notes"
+                ? "bg-indigo-600"
+                : "hover:bg-white/5"
+            }`}
+          >
+
+            <FaBookOpen />
+
+            Notes
+
+          </button>
+
+        </div>
+
+        <div className="glass rounded-3xl p-8">
+
+          {activeTab === "code" && (
+
+            <div>
+
+              <h2 className="text-2xl font-bold mb-5">
+
+                Problem Statement
+
+              </h2>
+
+              <div className="glass rounded-2xl p-5 mb-8">
+
+                {session.prompt}
+
+              </div>
+
+              <div className="grid xl:grid-cols-2 gap-8">
+
+                <div>
+
+                  <h3 className="text-xl font-semibold mb-5">
+
+                    Generated Code
+
+                  </h3>
+
+                  <Message
+                    message={{
+                      role: "assistant",
+                      content:
+                        session.generatedCode,
+                    }}
+                  />
+
+                </div>
+
+                <div>
+
+                  <h3 className="text-xl font-semibold mb-5">
+
+                    Optimized Code
+
+                  </h3>
+
+                  <Message
+                    message={{
+                      role: "assistant",
+                      content:
+                        session.optimizedCode ||
+                        "No optimized code available.",
+                    }}
+                  />
+
+                </div>
+
+              </div>
+
+            </div>
+
+          )}
+                    {activeTab === "mentor" && (
+
+            <div>
+
+              <h2 className="text-2xl font-bold mb-8">
+                Mentor Conversation
+              </h2>
+
+              {!session.chatHistory ||
+              session.chatHistory.length === 0 ? (
+
+                <div className="text-center py-20 text-slate-400">
+
+                  No mentor conversation available.
+
+                </div>
+
+              ) : (
+
+                <div className="space-y-8">
+
+                  {session.chatHistory.map(
+                    (chat, index) => (
+
+                      <div
+                        key={index}
+                        className="space-y-4"
+                      >
+
+                        {/* User */}
+
+                        <div className="flex justify-end">
+
+                          <div className="max-w-[80%] rounded-3xl rounded-br-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4 shadow-lg">
+
+                            {chat.question}
+
+                          </div>
+
+                        </div>
+
+                        {/* AI */}
+
+                        <div className="flex justify-start">
+
+                          <div className="glass rounded-3xl rounded-bl-lg p-5 max-w-[90%]">
+
+                            <Message
+                              message={{
+                                role:
+                                  "assistant",
+                                content:
+                                  chat.answer,
+                              }}
+                            />
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    )
+                  )}
+
+                </div>
+
+              )}
+
+            </div>
+
+          )}
+
+          {activeTab === "notes" && (
+
+            <div>
+
+              <h2 className="text-2xl font-bold mb-6">
+
+                Study Notes
+
+              </h2>
+
+              {!session.studyNotes ? (
+
+                <div className="text-center py-20 text-slate-400">
+
+                  Notes were not generated for
+                  this session.
+
+                </div>
+
+              ) : (
+
+                <div className="glass rounded-3xl p-8">
+
+                  <Message
+                    message={{
+                      role: "assistant",
+                      content:
+                        session.studyNotes,
+                    }}
+                  />
+
+                </div>
+
+              )}
+
+            </div>
+
+          )}
+
+        </div>
+
       </main>
+
     </div>
+
   );
+
 }

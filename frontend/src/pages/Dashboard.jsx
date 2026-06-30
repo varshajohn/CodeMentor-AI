@@ -7,114 +7,142 @@ import Message from "./Message";
 export default function Dashboard() {
   const [prompt, setPrompt] = useState("");
   const [language, setLanguage] = useState("");
+
   const [generatedCode, setGeneratedCode] = useState("");
   const [optimizedCode, setOptimizedCode] = useState("");
-  const [history, setHistory] = useState([]);
-  const [activeTab, setActiveTab] = useState("generated");
 
+  const [history, setHistory] = useState([]);
+
+  const [activeTab, setActiveTab] = useState("generated");
+const [comparison, setComparison] = useState("");
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col md:flex-row">
+    <div className="min-h-screen flex">
+
       <Sidebar />
 
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* Sleek App Header */}
-        <div className="border-b border-slate-200 bg-white px-8 py-6">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-xl font-bold tracking-tight text-slate-950">
-              Interactive Workspace
+      <main className="flex-1 p-8 overflow-hidden">
+
+        {/* Top */}
+
+        <div className="flex justify-between items-center mb-8">
+
+          <div>
+
+            <h1 className="text-4xl font-bold">
+              AI Workspace
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Analyze problems to generate clean code solutions, compare optimizations, and save detailed revisions.
+
+            <p className="text-slate-400 mt-2">
+              Generate • Optimize • Learn
             </p>
+
           </div>
+
         </div>
 
-        <div className="max-w-6xl w-full mx-auto p-6 md:p-8 space-y-8 flex-1 flex flex-col">
-          {/* Main generator card */}
-          <section className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
-            <CodeGenerator
-              setPrompt={setPrompt}
-              setLanguage={setLanguage}
-              setGeneratedCode={setGeneratedCode}
-              setOptimizedCode={setOptimizedCode}
-            />
-          </section>
+        {/* Generator */}
 
-          {/* Solution displays */}
-          {generatedCode && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-[580px]">
-              {/* Code output (7/12 cols) */}
-              <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[580px]">
-                <div className="bg-slate-50/50 px-6 py-4 flex items-center justify-between border-b border-slate-200">
-                  <div className="space-y-0.5">
-                    <h2 className="text-sm font-semibold text-slate-900">Source Solutions</h2>
-                    <p className="text-[10px] text-slate-500">Review compiled algorithm scripts.</p>
-                  </div>
-                  
-                  {/* Tab switches */}
-                  <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-lg">
-                    <button
-                      onClick={() => setActiveTab("generated")}
-                      className={`px-3 py-1.5 rounded-md text-[10px] font-semibold transition ${
-                        activeTab === "generated"
-                          ? "bg-white text-blue-600 shadow-xs border border-slate-200"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      Baseline
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("optimized")}
-                      className={`px-3 py-1.5 rounded-md text-[10px] font-semibold transition ${
-                        activeTab === "optimized"
-                          ? "bg-white text-blue-600 shadow-xs border border-slate-200"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      Optimized Code
-                    </button>
-                  </div>
+        <div className="glass rounded-3xl p-8 mb-8 fade-up">
+
+          <CodeGenerator
+    setComparison={setComparison}
+            setPrompt={setPrompt}
+            setLanguage={setLanguage}
+            setGeneratedCode={setGeneratedCode}
+            setOptimizedCode={setOptimizedCode}
+          />
+
+        </div>
+
+        {generatedCode && (
+
+          <div className="grid grid-cols-12 gap-8">
+
+            {/* Left */}
+
+            <div className="col-span-8">
+
+              <div className="glass rounded-3xl overflow-hidden h-[700px] flex flex-col">
+
+                {/* Tabs */}
+
+<div className="flex border-b border-white/10">
+
+  <button
+    onClick={() => setActiveTab("generated")}
+    className={`flex-1 py-5 font-semibold transition ${
+      activeTab === "generated"
+        ? "bg-indigo-600"
+        : "hover:bg-white/5"
+    }`}
+  >
+    Generated
+  </button>
+
+  <button
+    onClick={() => setActiveTab("optimized")}
+    className={`flex-1 py-5 font-semibold transition ${
+      activeTab === "optimized"
+        ? "bg-indigo-600"
+        : "hover:bg-white/5"
+    }`}
+  >
+    Optimized
+  </button>
+
+  <button
+    onClick={() => setActiveTab("comparison")}
+    className={`flex-1 py-5 font-semibold transition ${
+      activeTab === "comparison"
+        ? "bg-indigo-600"
+        : "hover:bg-white/5"
+    }`}
+  >
+    Comparison
+  </button>
+
+</div>
+
+                <div className="flex-1 overflow-y-auto p-8">
+
+<Message
+  message={{
+    role: "assistant",
+    content:
+      activeTab === "generated"
+        ? generatedCode
+        : activeTab === "optimized"
+        ? optimizedCode
+        : comparison,
+  }}
+/>
+
                 </div>
 
-                <div className="p-6 overflow-y-auto flex-1 bg-white">
-                  {activeTab === "generated" ? (
-                    <div>
-                      <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Baseline Code</span>
-                      </div>
-                      <Message
-                        message={{
-                          role: "assistant",
-                          content: generatedCode,
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-semibold">Refactored Version</span>
-                      </div>
-                      <Message
-                        message={{
-                          role: "assistant",
-                          content: optimizedCode || "*Optimization response generated or still loading.*",
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
               </div>
 
-              {/* Mentor interaction block (5/12 cols) */}
-              <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col h-[580px]">
-                <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-200">
-                  <h2 className="text-sm font-semibold text-slate-900">Mentor Queries</h2>
-                  <p className="text-[10px] text-slate-500">Step-by-step concept dialog.</p>
+            </div>
+
+            {/* Right */}
+
+            <div className="col-span-4">
+
+              <div className="glass rounded-3xl h-[700px]">
+
+                <div className="px-8 py-6 border-b border-white/10">
+
+                  <h2 className="text-2xl font-bold">
+                    AI Mentor
+                  </h2>
+
+                  <p className="text-slate-400 text-sm mt-2">
+                    Ask anything about this solution.
+                  </p>
+
                 </div>
-                
-                <div className="p-6 flex-1 flex flex-col min-h-0 bg-white">
+
+                <div className="h-[610px] p-6">
+
                   <ChatPanel
                     code={generatedCode}
                     prompt={prompt}
@@ -123,12 +151,19 @@ export default function Dashboard() {
                     history={history}
                     setHistory={setHistory}
                   />
+
                 </div>
+
               </div>
+
             </div>
-          )}
-        </div>
+
+          </div>
+
+        )}
+
       </main>
+
     </div>
   );
 }

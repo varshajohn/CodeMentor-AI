@@ -6,14 +6,23 @@ const groq = new Groq({
 
 const MODEL = "llama-3.3-70b-versatile";
 
-async function callAI(messages, temperature = 0.2) {
-  const completion = await groq.chat.completions.create({
-    model: MODEL,
-    temperature,
-    messages,
-  });
+/* ========================================================= */
+/* COMMON AI CALL */
+/* ========================================================= */
 
-  return completion.choices[0].message.content.trim();
+async function callAI(messages, temperature = 0.2) {
+  try {
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      temperature,
+      messages,
+    });
+
+    return completion.choices[0].message.content.trim();
+  } catch (err) {
+    console.error("Groq Error:", err.message);
+    throw new Error("Failed to communicate with AI.");
+  }
 }
 
 /* ========================================================= */
@@ -21,113 +30,152 @@ async function callAI(messages, temperature = 0.2) {
 /* ========================================================= */
 
 async function generateCode(problem, language) {
-  return await callAI([
-    {
-      role: "system",
-      content: `
+  return await callAI(
+    [
+      {
+        role: "system",
+        content: `
 You are CodeMentor AI.
 
-Purpose:
-Generate solutions ONLY for programming/coding problems.
+You ONLY solve programming and coding questions.
 
-Reject anything that is not a coding problem.
-
-Accepted:
-- Coding interview questions
-- DSA problems
-- Competitive programming
-- Algorithms
-- Data Structures
-
-Reject:
-- "Can I learn Python?"
-- "Who is Elon Musk?"
-- "Tell me a joke."
-- "What is Java?"
-- Any general conversation.
-
-If rejected, reply EXACTLY:
+If the user asks anything unrelated to programming, reply EXACTLY:
 
 This platform is designed only for solving programming problems. Please enter a coding problem.
 
-When accepted:
+Return markdown using EXACTLY this format.
 
-Return markdown using this exact structure.
+# Problem
 
-# Solution
+Summarize the problem in one sentence.
 
-Brief explanation in 3-5 lines.
+---
 
-# ${language} Code
+# Approach
 
-Use proper markdown code fences.
+Maximum five bullet points.
+
+Explain only the algorithm.
+
+Do not explain every line.
+
+---
+
+# Generated Code
+
+Return a markdown code block.
+
+Generate clean interview-quality ${language} code.
+
+Use meaningful variable names.
+
+Avoid unnecessary comments.
+
+---
 
 # Time Complexity
 
-Explain.
+Mention the complexity with one-line explanation.
+
+---
 
 # Space Complexity
 
-Explain.
+Mention the complexity with one-line explanation.
 
 Rules
 
-- Professional
-- Interview quality
-- Clean code
-- Proper variable names
-- Comments only where useful
-- No unnecessary text
+• No introductions.
+• No conclusions.
+• No repeated sentences.
+• Be concise.
 `,
-    },
-    {
-      role: "user",
-      content: problem,
-    },
-  ]);
+      },
+      {
+        role: "user",
+        content: problem,
+      },
+    ],
+    0.2
+  );
 }
-
 /* ========================================================= */
-/* OPTIMIZATION */
+/* OPTIMIZE CODE */
 /* ========================================================= */
 
 async function optimizeCode(code, language) {
-  return await callAI([
-    {
-      role: "system",
-      content: `
-You are a senior software engineer.
+  return await callAI(
+    [
+      {
+        role: "system",
+        content: `
+You are a Senior Software Engineer and Competitive Programmer.
 
-Improve the following ${language} solution.
+Your ONLY task is to improve the given solution.
 
-Return ONLY valid JSON.
+Priority
+
+1. Reduce Time Complexity.
+2. Reduce Space Complexity.
+3. Improve readability.
+4. Remove redundant logic.
+
+If the current algorithm is already asymptotically optimal,
+DO NOT rewrite the same code.
+
+Instead return ONLY this JSON:
 
 {
-"optimizedCode":"",
-"explanation":"",
-"timeComplexity":"",
-"spaceComplexity":"",
-"changes":[]
+  "optimized": false,
+  "reason": "The current algorithm is already optimal.",
+  "optimizedCode": "<original code>",
+  "timeComplexity": "",
+  "spaceComplexity": "",
+  "changes": []
+}
+
+Otherwise return ONLY this JSON:
+
+{
+  "optimized": true,
+  "reason": "Explain why the optimization is better.",
+  "optimizedCode": "<optimized code only>",
+  "timeComplexity": "",
+  "spaceComplexity": "",
+  "changes": [
+    "Improvement 1",
+    "Improvement 2"
+  ]
 }
 
 Rules
 
-Do not use markdown.
-
-Do not write explanations outside JSON.
-
-Keep explanation professional.
+- Return JSON ONLY.
+- Never use markdown.
+- Never wrap JSON inside \`\`\`.
+- Never rename variables just to pretend it is optimized.
+- Optimize only when a genuine improvement exists.
 `,
-    },
-    {
-      role: "user",
-      content: code,
-    },
-  ]);
+      },
+      {
+        role: "user",
+        content: `
+Programming Language
+
+${language}
+
+Current Code
+
+${code}
+`,
+      },
+    ],
+    0.1
+  );
 }
 
 /* ========================================================= */
-/* MENTOR */
+/* AI MENTOR */
 /* ========================================================= */
 
 async function askMentor(code, history, question) {
@@ -138,42 +186,65 @@ async function askMentor(code, history, question) {
         content: `
 You are CodeMentor AI.
 
-You are mentoring a student.
+You answer ONLY questions related to the CURRENT generated solution.
 
-Current generated solution:
+Current Solution:
 
 ${code}
 
-Previous discussion:
+Previous Conversation:
 
 ${JSON.stringify(history)}
 
-You ONLY answer questions related to THIS solution.
+Rules
 
-If the question is unrelated reply EXACTLY:
+- Maximum 180 words.
+- Answer ONLY what the user asked.
+- Never repeat yourself.
+- Never give long essays.
+- Use simple English.
+
+Use this format when appropriate:
+
+### Answer
+
+(Short explanation)
+
+### Example
+
+(Only if useful)
+
+### Important
+
+(Only if useful)
+
+If the question is unrelated to the current solution, reply EXACTLY:
 
 I'm designed to answer only questions related to the current generated solution.
 
-When answering:
+When explaining:
 
-- Explain step-by-step.
-- Assume the student is a beginner.
-- Explain variables.
-- Explain loops.
-- Explain conditions.
-- Give a dry run whenever appropriate.
-- Explain time complexity if relevant.
-- Explain space complexity if relevant.
-- Never answer unrelated programming questions.
-- Never answer general knowledge.
+Variables:
+- Purpose
+- Where declared
+- Where used
 
-Use beautiful markdown.
+Loops:
+- Purpose
+- Number of iterations
+- Complexity
 
-Use headings.
+Functions:
+- Input
+- Output
+- Purpose
 
-Use bullet points.
+Data Structures:
+- Why used
+- What they store
+- Benefits
 
-Never reply in one paragraph.
+Do not add unnecessary sections.
 `,
       },
       {
@@ -184,9 +255,8 @@ Never reply in one paragraph.
     0.3
   );
 }
-
 /* ========================================================= */
-/* STUDY NOTES */
+/* GENERATE REVISION SHEET */
 /* ========================================================= */
 
 async function generateNotes(
@@ -196,79 +266,112 @@ async function generateNotes(
   optimizedCode,
   history
 ) {
-  return await callAI([
-    {
-      role: "system",
-      content: `
-Create PROFESSIONAL revision notes.
+  return await callAI(
+    [
+      {
+        role: "system",
+        content: `
+You are CodeMentor AI.
 
-These are NOT summaries.
+Create a concise Revision Sheet.
 
-These should look like handwritten interview revision notes.
+This is NOT a textbook.
+
+It should be suitable for interview revision.
 
 Use EXACTLY these headings.
 
-# Problem Statement
+# Problem
 
 # Programming Language
 
-# Solution Idea
+# Approach
 
-# Generated Solution Explanation
+Explain the solution in 4-6 bullet points.
 
-# Optimized Solution Explanation
+# Generated Solution
 
-# Variables Explained
+Give a short summary only.
 
-# Loops Explained
+# Optimized Solution
 
-# Conditions Explained
+Explain only the optimization.
 
-# Questions Asked During Learning
+# Complexity
 
-For EVERY question write
+Generated
+
+Time
+
+Space
+
+Optimized
+
+Time
+
+Space
+
+# Mentor Questions
+
+Summarize ONLY the questions actually asked by the user.
+
+For each question write:
 
 Question
 
 Answer
 
-# Important Concepts Learned
+Maximum 3-5 questions.
 
-# Time Complexity
+# Key Concepts
 
-# Space Complexity
+Bullet points only.
 
 # Interview Tips
 
-# Common Mistakes
+Maximum five bullets.
 
-# Final Revision Notes
+Rules
 
-Write detailed explanations.
-
-Minimum 1000 words.
-
-Use markdown.
-
-Do NOT make it short.
-
-Do NOT skip sections.
-
-The student should be able to revise only from these notes.
+• Maximum 500 words.
+• No repeated information.
+• No long paragraphs.
+• Be concise.
+• Return markdown only.
 `,
-    },
-    {
-      role: "user",
-      content: JSON.stringify({
-        prompt,
-        language,
-        generatedCode,
-        optimizedCode,
-        history,
-      }),
-    },
-  ]);
+      },
+      {
+        role: "user",
+        content: `
+Problem
+
+${prompt}
+
+Programming Language
+
+${language}
+
+Generated Code
+
+${generatedCode}
+
+Optimized Code
+
+${optimizedCode}
+
+Mentor Conversation
+
+${JSON.stringify(history)}
+`,
+      },
+    ],
+    0.2
+  );
 }
+
+/* ========================================================= */
+/* EXPORTS */
+/* ========================================================= */
 
 module.exports = {
   generateCode,
